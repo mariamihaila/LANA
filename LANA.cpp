@@ -18,7 +18,7 @@
 
 
 LANA::LANA(int ng, int mr, int mv, int mi, const Matrix& V_source, const Matrix& Resistor, const Matrix& I_source,
-           const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0, Matrix& D_vg, Matrix&pg) : ng(ng), mr(mr), mv(mv), mi(mi), V_source(V_source),
+           const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,      Matrix& D_vg, Matrix&pg) : ng(ng), mr(mr), mv(mv), mi(mi), V_source(V_source),
 Resistor(Resistor), I_source(I_source),
 A_rg(A_rg), A_vg(A_vg), A_ig(A_ig), A_r0(A_r0), A_v0(A_v0), A_i0(A_i0), D_vg(D_vg), pg(pg) {}
 
@@ -55,11 +55,19 @@ void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nod
             // if node n is the independent node from the supernode set or if it is ordinary (these are the independent nodes
             // to be calculated in the end)
             
-            if ( _in_(n, ind_super_nodes) != -1 || _in_(n, ordinary_nodes) != -1 ){
+            if ( _in_(n, ordinary_nodes) != -1 ){
                 
                 D_vg.set(n, n, 1);
             }
             
+            if (_in_(n, ind_super_nodes) != -1){
+                D_vg.set(n, n ,1);
+                int index = _in_ (n, ind_super_nodes);
+                int x = dep_super_nodes[index];
+                D_vg.set(x, n, 1);
+                
+                
+            }
             // if node n is an dependent from the supernode set
             
             if (_in_(n, dep_super_nodes) != -1){
@@ -88,29 +96,30 @@ void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nod
 void LANA::construct_p_g(vector<int> dep_super_nodes, vector<int> non_essential_nodes){
     
     for(int i = 0; i < dep_super_nodes.size(); i++){
-        
         int node_var = dep_super_nodes[i];
         cout << endl << " dependent node car " << node_var << endl;
         for(int j = 0; j < mv; j++){
-            if (A_vg.get(j,node_var) != 0)
+            if (A_vg.get(j,node_var) != 0){
                 pg.set(node_var,0, A_vg.get(j,node_var));
+                pg.set(node_var,0, V_source.get(j,0) * pg.get(node_var,0));
         }
+    }
+    
     }
     
     for(int i = 0; i < non_essential_nodes.size(); i++){
         int node_var = non_essential_nodes[i];
         cout << endl << " non essential node car " << node_var << endl;
-
-        pg.set(node_var,0, A_vg.get(i,node_var));
+        for(int j = 0; j < mv; j++){
+            if (A_vg.get(j,node_var) != 0){
+                pg.set(node_var,0, A_vg.get(j,node_var));
+                pg.set(node_var,0, V_source.get(j,0) * pg.get(node_var,0));
+        }
+        
+    }
     }
     
-    int count = -1;
-    for(int i = 0; i < ng; i++){
-        if (pg.get(i,0) != 0){
-            count++;
-            pg.set(i,0, V_source.get(count,0) * pg.get(i,0));
-        }
-    }
+
     
     cout << endl << "particular solution pg" << endl;
     for(int i = 0; i < pg.get_num_rows(); i++){
@@ -120,63 +129,67 @@ void LANA::construct_p_g(vector<int> dep_super_nodes, vector<int> non_essential_
 }
 
 
-
+void LANA::this_node_has_to_be_independent(vector<int>& must_be_independent){
+    int frequency[ng];
+    for(int i = 0; i < ng; i++) frequency[i] = 0;
+    
+    for(int i = 0; i < mv; i++){
+        for(int j = 0; j < ng; j++){
+            if(A_vg.get(i,j) != 0){
+                frequency[j]++;
+                if (frequency[j] > 1) must_be_independent.push_back(j);
+            }
+        }
+    }
+}
 
 
 void LANA::node_classification(){
     
-    vector<int> ind_super_nodes;
+    vector<int>  ind_super_nodes;
     vector <int> dep_super_nodes;
-    vector<int> ordinary_nodes;
-    vector<int> non_essential_nodes;
-    
+    vector<int>  ordinary_nodes;
+    vector<int>  non_essential_nodes;
     int ground_node = ng - 1;
-    int count = 0;
+    int generalized_node[2] = {-1, -1};
+    vector<int> must_be_independent;
+    this_node_has_to_be_independent(must_be_independent);
     
-    // non zero columns: identifies supernodes and defines dependency relationships
-    // zero columns: identifies ordinary nodes
-    
-    for(int m = 0; m < mv; m++){
-        for(int n = 0; n < ng; n++){
-            if ( A_vg.get(m,n) != 0) {
-                count ++;
-                if (count % 2 == 0){
-                    dep_super_nodes.push_back(n);
-                } else{
-                    ind_super_nodes.push_back(n);
-                }
+    for (int i = 0; i < mv; i++){
+        int count = -1;
+        for (int j = 0; j < ng; j++){
+            
+            if (A_vg.get(i,j) != 0){
+                count++;
+                generalized_node[count] = j;
             }
+            
+        }
+        
+        if (generalized_node[1] == ground_node){
+            non_essential_nodes.push_back(generalized_node[0]);
+        }
+        // Case1: the first node has already been classed as independent
+        // so the second one is automatically dependent
+        if ((_in_(generalized_node[0], ind_super_nodes) != -1) || (_in_(generalized_node[0], must_be_independent) != -1)){
+            ind_super_nodes.push_back(generalized_node[0]);
+            dep_super_nodes.push_back(generalized_node[1]);
+        }
+        
+        // Case2: the second node has already been classed as independent
+        // so the first one is automatically dependent
+        
+        else {
+            ind_super_nodes.push_back(generalized_node[1]);
+            dep_super_nodes.push_back(generalized_node[0]);
         }
     }
-       
-    
-    // ordinary nodes - nodes that aren't dependent on any voltage source
     
     for(int i = 0; i < ng; i++){
         if (_in_(i, ind_super_nodes) == -1 && _in_(i, dep_super_nodes) == -1)
             ordinary_nodes.push_back(i);
     }
     
-    // case 1: the ground node is classified as independent.
-    /*  The ground node is removed from the independent super node vector,
-     Its dependent node is removed from the dependent super node vector,
-     and added to the non essential node vector
-     */
-    
-    int ground_index_independent = _in_(ground_node, ind_super_nodes);
-    if ( ground_index_independent != -1){
-        
-        non_essential_nodes.push_back(dep_super_nodes[ground_index_independent]);
-        dep_super_nodes.erase(dep_super_nodes.begin() + ground_index_independent);
-        ind_super_nodes.erase(ind_super_nodes.begin() + ground_index_independent);
-    }
-    
-    
-    // case 2: the ground node is classified as dependent.
-    /*  The ground node is removed from the dependent super node vector,
-     Its idependent node is removed from the independent super node vector,
-     and added to the non essential node vector
-     */
     
     int ground_index_dependent = _in_(ground_node, dep_super_nodes);
     if ( ground_index_dependent != -1){
@@ -184,6 +197,7 @@ void LANA::node_classification(){
         dep_super_nodes.erase(dep_super_nodes.begin() + ground_index_dependent);
         ind_super_nodes.erase(ind_super_nodes.begin() + ground_index_dependent);
     }
+    
     
     cout << "dependent nodes from supernode: " << endl;
     for(int i = 0; i < dep_super_nodes.size(); i++){
@@ -214,9 +228,6 @@ void LANA::node_classification(){
     cout << endl;
     
 }
-
-
-
 
 
 void LANA::solve() {
@@ -309,10 +320,7 @@ void LANA::solve() {
     cout << endl << "u_0" << endl;
     u_0.print_matrix();
     
-    
-    
-    
-    
+   
     
 }
 
