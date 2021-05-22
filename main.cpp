@@ -23,8 +23,8 @@ using namespace std;
 
 int main() {
     
-    int ng; int mv; int mr; int mi; int m;
-    ng = mv = mr = mi = m = 0;
+    int ng; int mv; int mr; int mi; int m; int ground_node;
+    ng = mv = mr = mi = m = ground_node = 0;
   
     
     cout << "Enter total number of nodes: ";
@@ -36,6 +36,10 @@ int main() {
     
     cout << "Enter mv, mr, mi" << endl;
     cin >> mv >> mr >> mi;
+    
+    cout << "Enter the ground node: ";
+    cin >> ground_node;
+    
     
     
     Matrix V_source (mv, 1, 0);
@@ -110,21 +114,22 @@ int main() {
     
     
     A_r0 = A_rg;
-    A_r0.delete_column(ng-1);
+    A_r0.delete_column(ground_node);
     
     A_v0 = A_vg;
-    A_v0.delete_column(ng -1);
-    
+    A_v0.delete_column(ground_node);
+
     A_i0 = A_ig;
-    A_i0.delete_column(ng -1);
+    A_i0.delete_column(ground_node);
+
     
     Matrix D_vg(ng, ng, 0);
     Matrix pg(ng,1, 0);
     
-    LANA circuit3(ng, mr, mv, mi, V_source, Resistor, I_source, A_rg, A_vg, A_ig, A_r0, A_v0, A_i0, D_vg, pg);
+    LANA circuit3(ng, mr, mv, mi,ground_node, V_source, Resistor, I_source, A_rg, A_vg, A_ig, A_r0, A_v0, A_i0, D_vg, pg);
     
      circuit3.solve();
-  
+     
     
     
     
