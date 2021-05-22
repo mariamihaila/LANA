@@ -17,8 +17,8 @@
 #include  "Matrix.hpp"
 
 
-LANA::LANA(int ng, int mr, int mv, int mi, const Matrix& V_source, const Matrix& Resistor, const Matrix& I_source,
-           const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,      Matrix& D_vg, Matrix&pg) : ng(ng), mr(mr), mv(mv), mi(mi), V_source(V_source),
+LANA::LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source, const Matrix& Resistor, const Matrix& I_source,
+           const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,      Matrix& D_vg, Matrix&pg) : ng(ng), mr(mr), mv(mv), mi(mi), ground_node(ground_node), V_source(V_source),
 Resistor(Resistor), I_source(I_source),
 A_rg(A_rg), A_vg(A_vg), A_ig(A_ig), A_r0(A_r0), A_v0(A_v0), A_i0(A_i0), D_vg(D_vg), pg(pg) {}
 
@@ -46,8 +46,8 @@ void delete_col(vector<vector<int>> &vect, int col_to_delete){
 
 
 void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nodes, vector<int> ordinary_nodes, vector<int> non_essential_nodes){
-    int ground_index = ng - 1;
-    
+    //int ground_index = ng - 1;
+
     for (int m = 0; m < ng; m++){
         for (int n = 0; n < ng; n++){
             
@@ -81,7 +81,7 @@ void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nod
     
     int num_cols_deleted = 0;
     for (int n = 0; n < ng; n++){
-        if (_in_(n, dep_super_nodes) != -1 || n == ground_index || _in_(n, non_essential_nodes) != -1){
+        if (_in_(n, dep_super_nodes) != -1 || n == ground_node  || _in_(n, non_essential_nodes) != -1){
             D_vg.delete_column(n - num_cols_deleted++);
         }
     }
@@ -150,7 +150,6 @@ void LANA::node_classification(){
     vector <int> dep_super_nodes;
     vector<int>  ordinary_nodes;
     vector<int>  non_essential_nodes;
-    int ground_node = ng - 1;
     int generalized_node[2] = {-1, -1};
     vector<int> must_be_independent;
     this_node_has_to_be_independent(must_be_independent);
@@ -168,7 +167,8 @@ void LANA::node_classification(){
         
         if (generalized_node[1] == ground_node){
             non_essential_nodes.push_back(generalized_node[0]);
-        }
+            ordinary_nodes.push_back(generalized_node[1]);
+        } else {
         // Case1: the first node has already been classed as independent
         // so the second one is automatically dependent
         if ((_in_(generalized_node[0], ind_super_nodes) != -1) || (_in_(generalized_node[0], must_be_independent) != -1)){
@@ -182,6 +182,7 @@ void LANA::node_classification(){
         else {
             ind_super_nodes.push_back(generalized_node[1]);
             dep_super_nodes.push_back(generalized_node[0]);
+        }
         }
     }
     
@@ -236,12 +237,11 @@ void LANA::solve() {
     // u - the number of independent nodes
     int u = D_vg.get_num_cols();
     
-    // set D to deflated voltage dependency matrix D_vg by deleting the last row
+    // set D to deflated voltage dependency matrix D_vg by deleting the ground node row
     Matrix D(ng -1, u ,0);
     D = D_vg;
-    D.delete_row(ng -1);
-    
-    
+    D.delete_row(ground_node);
+
     cout << endl << "D" << endl;
     D.print_matrix();
     
@@ -277,7 +277,8 @@ void LANA::solve() {
     Matrix b(ng - 1, 1, 0);
     Matrix p_0(ng, 1, 0);
     p_0 = pg;
-    p_0.delete_row(ng - 1);
+    p_0.delete_row(ground_node);
+
     b = (A_r0  * p_0);
     b = b * -1;
     
@@ -320,7 +321,10 @@ void LANA::solve() {
     cout << endl << "u_0" << endl;
     u_0.print_matrix();
     
-   
+    
+    
+    
+    
     
 }
 
