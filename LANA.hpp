@@ -35,7 +35,8 @@ public:
    
     
     LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source, const Matrix& Resistor, const Matrix& I_source,
-         const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,      Matrix& D_vg, Matrix&pg);
+         const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,     
+         Matrix& D_vg, Matrix&pg);
 
     void construct_Dvg( vector<int> ind_super_nodes, vector<int> dep_super_nodes,
                         vector<int>ordinary_nodes, vector<int> non_essential_nodes);
