@@ -1,8 +1,6 @@
 //
 //  Matrix.hpp
-//  getting+back+in+the+groove
 //
-//  Created by Maria  on 4/1/21.
 //
 
 #ifndef Matrix_hpp
@@ -43,7 +41,6 @@ public:
     bool upper_triangular();
    
     Matrix gauss_inverse();
-    
     void Construct_Gauss_Transforms(int col, Matrix& A);
     Matrix identity(int n);
     
@@ -56,10 +53,16 @@ public:
 
     Matrix forward_sub(Matrix& b);
     Matrix backward_sub(Matrix& y);
-
-
     Matrix deflate(Matrix& D, Matrix& A);
     Matrix transpose(Matrix& A);
+    
+    
+    
+    void swap_rows(Matrix& A, int row1, int row2);
+    void div_row(Matrix& A, int x, int row);
+    void add_mul_row(Matrix&A, int x, int row1, int row2);
+    void sub_rows(Matrix& A, int row1, int row2);
+    Matrix RREF(Matrix& A);
   
    
 };
