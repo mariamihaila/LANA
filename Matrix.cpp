@@ -8,6 +8,7 @@
 #include "Matrix.hpp"
 #include <fstream>
 #include <vector>
+#include <algorithm>
 
 
 using namespace std;
@@ -105,7 +106,7 @@ Matrix Matrix::operator*(Matrix & B){
             }
         }
     }
-   
+    
     return product;
 }
 
@@ -211,16 +212,9 @@ Matrix Matrix::identity(int n) {
 
 void Matrix::Construct_Gauss_Transforms(int pivot_index, Matrix& A){
     float val = 0.000;
-    cout << endl <<  "HEY I'm ACTUALLY GOING THROUGH THIS FUNCTION -----------------------------------------" << endl;
-    cout <<  endl << "Pivot_index:   " << pivot_index << endl;
-    
     for(int i = pivot_index + 1; i < num_rows; i++){
-        cout << endl << "value I'm trying to pivot:   " << A.get(i, pivot_index) << endl;
-        cout << endl << "Pivot: " << A.get(pivot_index,pivot_index) << endl;
-        
         val = -1 * A.get(i, pivot_index)/A.get(pivot_index,pivot_index);
         table[i][pivot_index] = val;
-        cout <<  endl << "val:   " << val << endl;
         
     }
     
@@ -275,50 +269,27 @@ Matrix Matrix::solve_NSLP(Matrix& U, Matrix& L, Matrix& b){
         
         gauss_transform.Construct_Gauss_Transforms(col,U);
         U = gauss_transform*U;
-        
-        cout << endl << "Gauss transform" << endl;
-        gauss_transform.print_matrix();
+
         inverse = gauss_transform.gauss_inverse();
-        
-        
-        cout << endl << "Inverse" << endl;
-        inverse.print_matrix();
         temp = gauss_transform * inverse;
-        
-        cout << endl << "Verify Inverse:" << endl;
-        temp.print_matrix();
-        
-        cout << endl << "U :" << endl;
-        U.print_matrix();
-        
         temp = L * inverse;
         L = temp;
-        cout << endl << "L" << endl;
-        L.print_matrix();
-        
         gauss_transform = identity(num_rows);
         
         col++;
         
     }
     
-    cout <<  endl << "U: " << endl;
-    U.print_matrix();
-    
+   
     Matrix x(num_rows, 1, 0);
     Matrix y(num_rows, 1, 0);
     
     
     y =  L.forward_sub(b);
     x = U.backward_sub(y);
+
     
-    cout << endl << "y: " << endl;
-    y.print_matrix();
-    
-    cout << endl << "x: " << endl;
-    x.print_matrix();
-    
-    return x; 
+    return x;
 }
 
 
@@ -346,14 +317,76 @@ Matrix Matrix::deflate(Matrix& D, Matrix& A){
         A.delete_column(A.num_cols -1);
         
     }
-    
-    
-    
-    
     A_deflated = A;
     return A_deflated;
 }
 
 
+
+
+void Matrix::swap_rows(Matrix& A, int row1, int row2){
+    
+    for(int j = 0; j < num_cols; j++){
+        int temp = A.get(row2,j);
+        A.set(row2, j, A.get(row1,j));
+        A.set(row1, j, temp);
+    }
+}
+
+void Matrix::div_row(Matrix& A, int x, int row){
+    for(int j = 0; j < num_cols; j++)
+    A.set(row, j,  x *A.get(row, j));
+}
+
+void Matrix::sub_rows(Matrix& A, int row1, int row2){
+    for(int j = 0; j < num_cols; j++)
+    A.set(row1, j, A.get(row1,j) - A.get(row2,j));
+}
+
+
+void Matrix::add_mul_row(Matrix&A,int x, int row1, int row2){
+    for(int j = 0; j < num_cols; j++){
+        A.set(row1, j, A.get(row1,j) + x*A.get(row2,j));
+    }
+}
+
+
+
+Matrix Matrix::RREF(Matrix& A){
+    Matrix U(A.num_rows, A.num_cols, 0);
+    int lead = 0;
+    int m = 0;
+    for ( m = 0; m < num_rows; m++){
+        if (num_cols <= lead){
+            break;
+        }
+        int i = m;
+        while(A.get(i, lead) == 0){
+            i++;
+            if (num_rows == i){
+                i = m;
+                lead++;
+                if (num_cols  == lead){
+                    break;
+                }
+            }
+        }
+        swap(i,m);
+        A.div_row(A, A.get(m, lead), m);
+        
+        
+        for(int i = 0; i < num_rows; i++){
+            if(i != m){
+                A.add_mul_row(A, -1 * A.get(i, lead), i, m);
+                
+            }
+        }
+        lead++;
+    }
+    
+    
+    U = A;
+    return U;
+}
 
 
