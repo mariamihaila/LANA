@@ -90,6 +90,8 @@ int main() {
         }
         
     }
+    
+    
     cout << endl << "A_rg" << endl;
     A_rg.print_matrix();
     cout << endl;
@@ -107,12 +109,11 @@ int main() {
     V_source.print_matrix();
     cout << endl;
   
-    
     Matrix A_r0(mr, ng -1, 0);
     Matrix A_v0(mv, ng -1, 0);
     Matrix A_i0(mi, ng -1, 0);
     
-    
+  
     A_r0 = A_rg;
     A_r0.delete_column(ground_node);
     
@@ -126,16 +127,11 @@ int main() {
     Matrix D_vg(ng, ng, 0);
     Matrix pg(ng,1, 0);
     
-    LANA circuit3(ng, mr, mv, mi,ground_node, V_source, Resistor, I_source, A_rg, A_vg, A_ig, A_r0, A_v0, A_i0, D_vg, pg);
+    LANA circuit_test(ng, mr, mv, mi,ground_node, V_source, Resistor, I_source, A_rg, A_vg, A_ig, A_r0, A_v0, A_i0, D_vg, pg);
     
-     circuit3.solve();
+    circuit_test.solve();
      
-    
-    
-    
-    
-    
-
+   
 
 }
 
