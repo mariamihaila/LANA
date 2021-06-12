@@ -45,30 +45,33 @@ void delete_col(vector<vector<int>> &vect, int col_to_delete){
 
 
 
-void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nodes, vector<int> ordinary_nodes, vector<int> non_essential_nodes){
-    //int ground_index = ng - 1;
-
+void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nodes,
+                          vector<int> ordinary_nodes, vector<int> non_essential_nodes){
+    
+    
     for (int m = 0; m < ng; m++){
         for (int n = 0; n < ng; n++){
             
+            // Case 1: n is an ordinary node
+            // set the entry (n,n)  to 1.
             
-            // if node n is the independent node from the supernode set or if it is ordinary (these are the independent nodes
-            // to be calculated in the end)
             
-            if ( _in_(n, ordinary_nodes) != -1 ){
-                
+            if ( _in_(n, ordinary_nodes) != -1 )
                 D_vg.set(n, n, 1);
-            }
+            
+            
+            // Case 2: n is independent node
+            // set the (n,n) entry to 1.
+            // find the index x of the node dependent on n
+            // set the entry (x,n) to 1
             
             if (_in_(n, ind_super_nodes) != -1){
                 D_vg.set(n, n ,1);
-                int index = _in_ (n, ind_super_nodes);
+                int index = _in_(n, ind_super_nodes);
                 int x = dep_super_nodes[index];
                 D_vg.set(x, n, 1);
-                
-                
             }
-            // if node n is an dependent from the supernode set
+            
             
             if (_in_(n, dep_super_nodes) != -1){
                 int index = _in_(n, dep_super_nodes);
@@ -79,53 +82,20 @@ void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nod
         
     }
     
+    
     int num_cols_deleted = 0;
-    for (int n = 0; n < ng; n++){
+    for (int n = 0; n < ng; n++) {
         if (_in_(n, dep_super_nodes) != -1 || n == ground_node  || _in_(n, non_essential_nodes) != -1){
             D_vg.delete_column(n - num_cols_deleted++);
         }
     }
-    
-    cout << endl << "Node dependency matrix D_Vg:" << endl;
     D_vg.print_matrix();
-    
 }
 
 
 
-void LANA::construct_p_g(vector<int> dep_super_nodes, vector<int> non_essential_nodes){
-    
-    for(int i = 0; i < dep_super_nodes.size(); i++){
-        int node_var = dep_super_nodes[i];
-        cout << endl << " dependent node car " << node_var << endl;
-        for(int j = 0; j < mv; j++){
-            if (A_vg.get(j,node_var) != 0){
-                pg.set(node_var,0, A_vg.get(j,node_var));
-                pg.set(node_var,0, V_source.get(j,0) * pg.get(node_var,0));
-        }
-    }
-    
-    }
-    
-    for(int i = 0; i < non_essential_nodes.size(); i++){
-        int node_var = non_essential_nodes[i];
-        cout << endl << " non essential node car " << node_var << endl;
-        for(int j = 0; j < mv; j++){
-            if (A_vg.get(j,node_var) != 0){
-                pg.set(node_var,0, A_vg.get(j,node_var));
-                pg.set(node_var,0, V_source.get(j,0) * pg.get(node_var,0));
-        }
-        
-    }
-    }
-    
-
-    
-    cout << endl << "particular solution pg" << endl;
-    for(int i = 0; i < pg.get_num_rows(); i++){
-        cout << pg.get(i,0) << endl;
-    }
-    
+void LANA::construct_p_g(){
+    pg = pg.solve_GLSP(A_vg, V_source);
 }
 
 
@@ -142,6 +112,7 @@ void LANA::this_node_has_to_be_independent(vector<int>& must_be_independent){
         }
     }
 }
+
 
 
 void LANA::node_classification(){
@@ -169,20 +140,21 @@ void LANA::node_classification(){
             non_essential_nodes.push_back(generalized_node[0]);
             ordinary_nodes.push_back(generalized_node[1]);
         } else {
-        // Case1: the first node has already been classed as independent
-        // so the second one is automatically dependent
-        if ((_in_(generalized_node[0], ind_super_nodes) != -1) || (_in_(generalized_node[0], must_be_independent) != -1)){
-            ind_super_nodes.push_back(generalized_node[0]);
-            dep_super_nodes.push_back(generalized_node[1]);
-        }
-        
-        // Case2: the second node has already been classed as independent
-        // so the first one is automatically dependent
-        
-        else {
-            ind_super_nodes.push_back(generalized_node[1]);
-            dep_super_nodes.push_back(generalized_node[0]);
-        }
+            // Case1: the first node has already been classed as independent
+            // so the second one is automatically dependent
+            if ((_in_(generalized_node[0], ind_super_nodes) != -1)
+                || (_in_(generalized_node[0], must_be_independent) != -1)){
+                ind_super_nodes.push_back(generalized_node[0]);
+                dep_super_nodes.push_back(generalized_node[1]);
+            }
+            
+            // Case2: the second node has already been classed as independent
+            // so the first one is automatically dependent
+            
+            else {
+                ind_super_nodes.push_back(generalized_node[1]);
+                dep_super_nodes.push_back(generalized_node[0]);
+            }
         }
     }
     
@@ -191,6 +163,10 @@ void LANA::node_classification(){
             ordinary_nodes.push_back(i);
     }
     
+    // However, if the ground node is classified as dependent - it is
+    // erased from that vector, and the node that it was dependent on
+    // is now classified as a nonessential node
+    
     
     int ground_index_dependent = _in_(ground_node, dep_super_nodes);
     if ( ground_index_dependent != -1){
@@ -198,35 +174,10 @@ void LANA::node_classification(){
         dep_super_nodes.erase(dep_super_nodes.begin() + ground_index_dependent);
         ind_super_nodes.erase(ind_super_nodes.begin() + ground_index_dependent);
     }
-    
-    
-    cout << "dependent nodes from supernode: " << endl;
-    for(int i = 0; i < dep_super_nodes.size(); i++){
-        cout << dep_super_nodes[i] << " ";
-    }
-    cout << endl;
-    
-    cout << "independent nodes from supernode: " << endl;
-    for(int i = 0; i < ind_super_nodes.size(); i++){
-        cout << ind_super_nodes[i] << " ";
-    }
-    cout << endl;
-    
-    cout << "ordinary nodes:  " << endl;
-    for(int i = 0; i < ordinary_nodes.size(); i++){
-        cout << ordinary_nodes[i] << " ";
-    }
-    cout << endl;
-    
-    cout << "non essential nodes:  " << endl;
-    for(int i = 0; i < non_essential_nodes.size(); i++){
-        cout << non_essential_nodes[i] << " ";
-    }
-    cout << endl;
+
     
     construct_Dvg(ind_super_nodes, dep_super_nodes, ordinary_nodes, non_essential_nodes);
     construct_p_g(dep_super_nodes, non_essential_nodes);
-    cout << endl;
     
 }
 
@@ -241,10 +192,8 @@ void LANA::solve() {
     Matrix D(ng -1, u ,0);
     D = D_vg;
     D.delete_row(ground_node);
-
-    cout << endl << "D" << endl;
-    D.print_matrix();
     
+
     // ground the blocks of the incidence matrix
     
     Matrix Ar(mr, u, 0);
@@ -268,22 +217,18 @@ void LANA::solve() {
     Matrix K(u, u, 0);
     
     K = (Ar_T*G) * Ar;
-    
-    cout << endl << "K " << endl;
-    K.print_matrix();
-    
+
     // construct matrix b  = Ar0 * p0
     
     Matrix b(ng - 1, 1, 0);
     Matrix p_0(ng, 1, 0);
     p_0 = pg;
     p_0.delete_row(ground_node);
-
+    
     b = (A_r0  * p_0);
     b = b * -1;
     
-    cout << endl << "b" << endl;
-    b.print_matrix();
+
     
     //construct vector f = Ai^T * I_source
     Matrix f(u, 1, 0);
@@ -293,23 +238,16 @@ void LANA::solve() {
     Ai_T = Ai_T.transpose(Ai_T);
     
     f = (Ai_T * I_source) * -1;
-    cout << endl << "f" << endl;
-    f.print_matrix();
-    A_i0.print_matrix();
-    A_v0.print_matrix();
-    
-    //Ai.print_matrix();
-    
+  
+ 
     //RHS - Ar^T * G * b - f
     
     Matrix RHS(u, 1, 0);
     
     RHS = (Ar_T * G *b) + f;
-    cout << endl << "RHS" << endl;
-    RHS.print_matrix();
+  
     
-    A_r0.print_matrix();
-    
+    // Calculate and print the voltage drop across all nodes -------------
     
     Matrix u_solution(u, 1, 0);
     Matrix L(u, u, 0);
@@ -318,13 +256,57 @@ void LANA::solve() {
     
     Matrix u_0(ng -1, 1, 0);
     u_0 = D * u_solution + p_0;
-    cout << endl << "u_0" << endl;
+    cout << endl << "The voltage drop across all nodes: -------------" << endl;
+    cout << endl << "u_0 = " << endl;
     u_0.print_matrix();
     
     
     
+   // calculate and print the voltage running through resistors
+    
+    Matrix v_r(mr, ng -1, 0);
+    v_r = A_r0*u_0; // Kirchoff's voltage law in node potential form
+
+    cout << endl << "The voltage running through resistors: -------------" << endl;
+    cout << endl << "v_0 = " << endl;
+    v_r.print_matrix();
     
     
+    // Calculate and print the current running through resistors  -------------
+ 
+    Matrix i_r(mi, ng -1, 0);
+    i_r = G * v_r; // Ohm's Law in conductance form
+    
+    cout << endl << "The current running through resistors:  -------------" << endl;
+    cout << endl << "i_r = " << endl;
+    i_r.print_matrix();
+    
+    
+    // Calculate and print the voltage drop across current sources -------------
+    Matrix v_i(mi, ng - 1, 0);
+    v_i = A_i0*u_0;
+    cout << endl << "The voltage drop across the current sources:  -------------" << endl;
+    cout << endl << "v_i = " << endl;
+    v_i.print_matrix();
+    
+    
+    // Calculate the current running through the voltage sources ---------------
+    Matrix y(ng-1, 1, 0);
+    y =  ((A_r0.transpose(A_r0)* i_r));
+    y = (A_i0.transpose(A_i0) * I_source) + y;
+    y = y * -1;
+    
+    Matrix i_v(mv, 1, 0);
+    L = L.identity(mv);
+   
+    Matrix Av0_T(mv, ng - 1, 0);
+    Av0_T = A_v0;
+    Av0_T = Av0_T.transpose(Av0_T);
+    i_v = i_v.solve_GLSP(Av0_T, y);
+    cout << endl << "The current running through the voltage sources :  -------------" << endl;
+    cout << endl << "i_v = " << endl;
+    i_v.print_matrix();
+
     
 }
 
