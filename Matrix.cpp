@@ -260,7 +260,6 @@ Matrix Matrix::backward_sub(Matrix& y){
 Matrix Matrix::solve_NSLP(Matrix& U, Matrix& L, Matrix& b){
     Matrix gauss_transform(num_rows, num_cols, 0.0);
     gauss_transform = identity(num_rows);
-    
     Matrix inverse(num_rows, num_cols, 0.0);
     Matrix temp(num_rows, num_cols, 0.0);
     
@@ -351,6 +350,24 @@ void Matrix::add_mul_row(Matrix&A,int x, int row1, int row2){
 }
 
 
+Matrix Matrix::augmented_matrix(Matrix& A, Matrix & B){
+    assert (A.num_rows == B.num_rows);
+    int num_cols_to_add = B.num_cols;
+    Matrix A_B(A.num_rows, A.num_cols + B.num_cols, 0);
+    
+    for(int i = 0; i < A.num_rows; i++){
+        for(int j = 0; j < A.num_cols + num_cols_to_add; j++){
+           if (j < A.num_cols) A_B.set(i,j,A.get(i,j));
+           else {
+               A_B.set(i,j, B.get(i, j - A.num_cols));
+           }
+        }
+    }
+    
+    A = A_B;
+    return A_B;
+    
+}
 
 Matrix Matrix::RREF(Matrix& A){
     Matrix U(A.num_rows, A.num_cols, 0);
@@ -384,9 +401,57 @@ Matrix Matrix::RREF(Matrix& A){
         lead++;
     }
     
-    
     U = A;
     return U;
 }
+
+Matrix Matrix::particular_solution(Matrix &RREF){
+    Matrix x (num_cols - 1, 1, 0);
+    
+    // isolate y : the last column of augmented matrix in RREF form
+    
+    Matrix y (num_rows, 1, 0);
+    for(int i = 0; i < num_rows; i++){
+        y.set(i,0, RREF.get(i, num_cols- 1));
+    }
+    
+    // express vector b in terms of the pivot columns of RREF
+    for (int i = 0; i  < num_rows; i++){
+        for(int j = 0; j < num_cols - 1; j++){
+            if(RREF.get(i,j) == 1) x.set(j, 0, y.get(i,0));
+        }
+    }
+    
+    
+    
+    
+    return x;
+}
+
+Matrix Matrix::solve_GLSP(Matrix&A, Matrix&b){
+   
+    // Step (1) - create the augmented matrix [A | b ]
+    
+    Matrix Ay (A.num_rows, A.num_cols + 1, 0);
+    Ay = Ay.augmented_matrix(A, b);
+    
+    // Step (2) - calculate U, the reduced row echelon form
+    // of augmented matrix Ay
+    
+    Matrix U(A.num_rows, A.num_cols + 1, 0);
+    U = U.RREF(Ay);
+    
+    // Step (3) - solve for the particular solution
+    
+    // solve for particular solution :
+    Matrix x( Ay.get_num_cols(), 1, 0);
+    x = U.particular_solution(U);
+    return x;
+  
+}
+    
+    
+
+
 
 
