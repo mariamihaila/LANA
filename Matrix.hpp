@@ -1,6 +1,8 @@
 //
 //  Matrix.hpp
+//  getting+back+in+the+groove
 //
+//  Created by Maria  on 4/1/21.
 //
 
 #ifndef Matrix_hpp
@@ -56,13 +58,17 @@ public:
     Matrix deflate(Matrix& D, Matrix& A);
     Matrix transpose(Matrix& A);
     
-    
-    
     void swap_rows(Matrix& A, int row1, int row2);
     void div_row(Matrix& A, int x, int row);
     void add_mul_row(Matrix&A, int x, int row1, int row2);
     void sub_rows(Matrix& A, int row1, int row2);
+    Matrix augmented_matrix(Matrix& A, Matrix & B);
     Matrix RREF(Matrix& A);
+    Matrix particular_solution(Matrix&RREF);
+    Matrix solve_GLSP(Matrix&A, Matrix&b);
+    
+    
+    
   
    
 };
