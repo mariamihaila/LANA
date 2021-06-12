@@ -40,7 +40,7 @@ public:
     void construct_Dvg( vector<int> ind_super_nodes, vector<int> dep_super_nodes,
                         vector<int>ordinary_nodes, vector<int> non_essential_nodes);
     
-    void construct_p_g(vector<int> dep_super_nodes, vector<int> non_essential_nodes);
+    void construct_p_g();
     void node_classification ( );
     void construct_K ();
     void solve();
