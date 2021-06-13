@@ -3,8 +3,6 @@
 #include "Matrix.hpp"
 using namespace std;
 
-
-
 class LANA{
 private:
     
@@ -54,16 +52,6 @@ private:
     Matrix v_r;   // voltage drops across resistors               || dimensions: mr x 1
 
     
-
-
-    
-    
-    
-    
-    
-  
-    
-    
 public:
     
     LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source,
@@ -91,7 +79,5 @@ public:
     
     void construct_p_g();
 
-    
-    
-    
+  
 };
