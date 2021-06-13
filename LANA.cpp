@@ -17,14 +17,21 @@
 #include  "Matrix.hpp"
 
 
-LANA::LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source, const Matrix& Resistor, const Matrix& I_source,
-           const Matrix& A_rg, const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,      Matrix& D_vg, Matrix&pg) : ng(ng), mr(mr), mv(mv), mi(mi), ground_node(ground_node), V_source(V_source),
-Resistor(Resistor), I_source(I_source),
-A_rg(A_rg), A_vg(A_vg), A_ig(A_ig), A_r0(A_r0), A_v0(A_v0), A_i0(A_i0), D_vg(D_vg), pg(pg) {}
+LANA::LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source,
+           const Matrix& Resistor, const Matrix& I_source,const Matrix& A_rg,
+           const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0,
+           const Matrix& A_v0, const Matrix& A_i0, Matrix& D_vg, Matrix&pg,
+           const Matrix& u_0, const Matrix& i_r, const Matrix& i_v,
+           const Matrix& v_i, const Matrix& v_r) : ng(ng), mr(mr), mv(mv), mi(mi),
+                                                   ground_node(ground_node), V_source(V_source),
+                                                   Resistor(Resistor), I_source(I_source),
+                                                   A_rg(A_rg), A_vg(A_vg), A_ig(A_ig), A_r0(A_r0),
+                                                   A_v0(A_v0), A_i0(A_i0), D_vg(D_vg), pg(pg),
+                                                   u_0(u_0), i_r(i_r), i_v(i_v), v_i(v_i), v_r(v_r){}
 
 
 
-int _in_ (int key, vector <int> vect){
+int _in_(int key, vector <int> vect){
     int index = -1;
     for(int i = 0; i < vect.size(); i++){
         if(vect[i] == key) index = i;
@@ -181,20 +188,73 @@ void LANA::node_classification(){
     
 }
 
+void LANA::node_voltage_potentials(int u, Matrix&K, Matrix& D, Matrix& RHS, Matrix& p_0){
+    
+    Matrix u_solution(u, 1, 0);
+    Matrix L(u, u, 0);
+    L = L.identity(u);
+    u_solution = u_solution.solve_NSLP(K,L,RHS);
+    
+    u_0 = D * u_solution + p_0;
+    cout << endl << "The voltage drop across all nodes: -------------" << endl;
+    cout << endl << "u_0 = " << endl;
+    u_0.print_matrix();
+    
+}
+
+void LANA::voltage_drop_across_resistors(){
+    v_r = A_r0 * u_0; // Kirchoff's voltage law in node potential form
+    cout << endl << "The voltage drop across the resistors: -------------" << endl;
+    cout << endl << "v_r = " << endl;
+    v_r.print_matrix();
+}
+
+void LANA::voltage_drop_across_current_sources(){
+    v_i = A_i0*u_0;
+    cout << endl << "The voltage drop across the current sources:  -------------" << endl;
+    cout << endl << "v_i = " << endl;
+    v_i.print_matrix();
+}
+
+
+void LANA::current_through_resistors(Matrix& G){
+    i_r = G * v_r; // Ohm's Law in conductance form
+    cout << endl << "The current running through resistors:  -------------" << endl;
+    cout << endl << "i_r = " << endl;
+    i_r.print_matrix();
+    
+}
+
+void LANA::current_through_voltage_sources(){
+    
+    Matrix y(ng-1, 1, 0);
+    y =  ((A_r0.transpose(A_r0)* i_r));
+    y = (A_i0.transpose(A_i0) * I_source) + y;
+    y = y * -1;
+    
+    Matrix i_v(mv, 1, 0);
+    Matrix Av0_T(mv, ng - 1, 0);
+    Av0_T = A_v0;
+    Av0_T = Av0_T.transpose(Av0_T);
+    i_v = i_v.solve_GLSP(Av0_T, y);
+    cout << endl << "The current running through the voltage sources :  -------------" << endl;
+    cout << endl << "i_v = " << endl;
+    i_v.print_matrix();
+    
+}
 
 void LANA::solve() {
+    
     node_classification();
     
-    // u - the number of independent nodes
     int u = D_vg.get_num_cols();
-    
     // set D to deflated voltage dependency matrix D_vg by deleting the ground node row
     Matrix D(ng -1, u ,0);
     D = D_vg;
     D.delete_row(ground_node);
     
 
-    // ground the blocks of the incidence matrix
+    // Maximally deflate the circuit equations
     
     Matrix Ar(mr, u, 0);
     Ar = A_r0 * D;
@@ -206,7 +266,7 @@ void LANA::solve() {
     Ai = A_i0 * D;
     
     
-    // construct matrix K = Ar^T*G*Ar
+    // construct the linear-algebraic nodal analysis coefficient matrix: K = Ar^T*G*Ar
     
     Matrix G(mr, mr, 0);
     G = G.identity(mr);
@@ -218,7 +278,7 @@ void LANA::solve() {
     
     K = (Ar_T*G) * Ar;
 
-    // construct matrix b  = Ar0 * p0
+    // construct voltage source forcing terms at the nodes of the circuit: b = -A_r0 * p_0
     
     Matrix b(ng - 1, 1, 0);
     Matrix p_0(ng, 1, 0);
@@ -228,9 +288,8 @@ void LANA::solve() {
     b = (A_r0  * p_0);
     b = b * -1;
     
-
     
-    //construct vector f = Ai^T * I_source
+    // construct current source forcing terms at the nodes of the circuit: Ai^T * I_source
     Matrix f(u, 1, 0);
     
     Matrix Ai_T(mi, u, 0);
@@ -240,74 +299,21 @@ void LANA::solve() {
     f = (Ai_T * I_source) * -1;
   
  
-    //RHS - Ar^T * G * b - f
+    // The righthand side to the linear algebraic nodal analysis equations : RHS = Ar^T * G * b - f
+    // (The linear algebraic nodal analysis equation in full : (Ar^T * G * Ar) * u = Ar^T * G * b - f
     
     Matrix RHS(u, 1, 0);
-    
     RHS = (Ar_T * G *b) + f;
   
+    // Solve for all the circuit variables
     
-    // Calculate and print the voltage drop across all nodes -------------
-    
-    Matrix u_solution(u, 1, 0);
-    Matrix L(u, u, 0);
-    L = L.identity(u);
-    u_solution = u_solution.solve_NSLP(K,L,RHS);
-    
-    Matrix u_0(ng -1, 1, 0);
-    u_0 = D * u_solution + p_0;
-    cout << endl << "The voltage drop across all nodes: -------------" << endl;
-    cout << endl << "u_0 = " << endl;
-    u_0.print_matrix();
-    
-    
-    
-   // calculate and print the voltage running through resistors
-    
-    Matrix v_r(mr, ng -1, 0);
-    v_r = A_r0*u_0; // Kirchoff's voltage law in node potential form
+    node_voltage_potentials(u, K, D, RHS, p_0);
+    voltage_drop_across_resistors();
+    voltage_drop_across_current_sources();
+    current_through_resistors(G);
+    current_through_voltage_sources();
+      
 
-    cout << endl << "The voltage running through resistors: -------------" << endl;
-    cout << endl << "v_0 = " << endl;
-    v_r.print_matrix();
-    
-    
-    // Calculate and print the current running through resistors  -------------
- 
-    Matrix i_r(mi, ng -1, 0);
-    i_r = G * v_r; // Ohm's Law in conductance form
-    
-    cout << endl << "The current running through resistors:  -------------" << endl;
-    cout << endl << "i_r = " << endl;
-    i_r.print_matrix();
-    
-    
-    // Calculate and print the voltage drop across current sources -------------
-    Matrix v_i(mi, ng - 1, 0);
-    v_i = A_i0*u_0;
-    cout << endl << "The voltage drop across the current sources:  -------------" << endl;
-    cout << endl << "v_i = " << endl;
-    v_i.print_matrix();
-    
-    
-    // Calculate the current running through the voltage sources ---------------
-    Matrix y(ng-1, 1, 0);
-    y =  ((A_r0.transpose(A_r0)* i_r));
-    y = (A_i0.transpose(A_i0) * I_source) + y;
-    y = y * -1;
-    
-    Matrix i_v(mv, 1, 0);
-    L = L.identity(mv);
-   
-    Matrix Av0_T(mv, ng - 1, 0);
-    Av0_T = A_v0;
-    Av0_T = Av0_T.transpose(Av0_T);
-    i_v = i_v.solve_GLSP(Av0_T, y);
-    cout << endl << "The current running through the voltage sources :  -------------" << endl;
-    cout << endl << "i_v = " << endl;
-    i_v.print_matrix();
-
-    
 }
 
 
