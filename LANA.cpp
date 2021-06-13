@@ -177,7 +177,7 @@ void LANA::node_classification(){
 
     
     construct_Dvg(ind_super_nodes, dep_super_nodes, ordinary_nodes, non_essential_nodes);
-    construct_p_g(dep_super_nodes, non_essential_nodes);
+    construct_p_g();
     
 }
 
