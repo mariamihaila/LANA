@@ -127,11 +127,19 @@ int main() {
     Matrix D_vg(ng, ng, 0);
     Matrix pg(ng,1, 0);
     
-    LANA circuit_test(ng, mr, mv, mi,ground_node, V_source, Resistor, I_source, A_rg, A_vg, A_ig, A_r0, A_v0, A_i0, D_vg, pg);
     
-    circuit_test.solve();
+    Matrix u_0 (1,1,1);   // voltage drops across nodes(excluding ground) || dimensions: n0 x 1
+    
+    Matrix i_r(1,1,1);   // current running thorguh resistors            || dimensions: mr x 1
+    Matrix i_v(1,1,1);   // current running through V-Sources            || dimensions: mv x 1
+    
+    Matrix v_i(1,1,1);   // voltage drops across C-Sources               || dimensions: mi x 1
+    Matrix v_r(1,1,1);
+    
+    LANA circuit3(ng, mr, mv, mi,ground_node, V_source, Resistor, I_source, A_rg, A_vg, A_ig, A_r0, A_v0, A_i0, D_vg, pg, u_0, i_r, i_v, v_i, v_r );
+    
+    circuit3.solve();
      
-   
 
 }
 
