@@ -85,19 +85,13 @@ void Matrix::delete_row(int row){
 }
 
 
-/*  ------------------- ###### OVERLOADED OPERATORS ######  -------------------
+//  ------------------- ###### OVERLOADED OPERATORS ######  -------------------
    
   
 
 
 
 // Matrix - Matrix multiplication
-
-/  *************************************************************
- *  @Params:                                                    *
- *  @Returns:                                                   *
- *  *************************************************************
-*/
 
 Matrix Matrix::operator*(Matrix & B){
     assert (num_cols == B.num_rows);
@@ -120,13 +114,6 @@ Matrix Matrix::operator*(Matrix & B){
 
 //  Matrix Scalar Multiplication
 
-/*  *************************************************************
- *  @Params:                                                    *
- *  @Returns:                                                   *
- *  *************************************************************
-*/
-
-
 Matrix Matrix::operator*(float x){
     Matrix scalar_mult(num_rows, num_cols, 0);
     for(int i = 0; i < num_rows; i++){
@@ -145,12 +132,6 @@ Matrix Matrix::operator*(float x){
 
 //  Matrix - Matrix Addition
 
-/*  *************************************************************
- *  @Params:                                                    *
- *  @Returns:                                                   *
- *  *************************************************************
-*/
-
 Matrix Matrix::operator+(Matrix & B){
     Matrix add(num_rows, num_cols, 0);
     for(int i = 0; i < num_rows; i++){
@@ -166,12 +147,6 @@ Matrix Matrix::operator+(Matrix & B){
 }
 
 //  Matrix Assignment Operator
-
-/*  *************************************************************
- *  @Params:                                                    *
- *  @Returns:                                                   *
- *  *************************************************************
-*/
 
 Matrix& Matrix::operator=(const Matrix &right){
     num_rows = right.num_rows;
@@ -195,6 +170,25 @@ Matrix& Matrix::operator=(const Matrix &right){
 
 
 //                       -------------------  Helper Functions -------------------
+
+
+
+//  Construct a Gauss transform
+
+/*  *************************************************************
+ *  Given : an integer pivot index, and a Matrix A
+ *  Returns: a gauss transform (elementary matrix)
+ *  *************************************************************
+*/
+void Matrix::Construct_Gauss_Transforms(int pivot_index, Matrix& A){
+    float val = 0.000;
+    for(int i = pivot_index + 1; i < num_rows; i++){
+        val = -1 * A.get(i, pivot_index)/A.get(pivot_index,pivot_index);
+        table[i][pivot_index] = val;
+        
+    }
+    
+}
 
    
 //  Finds the inverse of a Gauss transform
@@ -257,24 +251,12 @@ Matrix Matrix::identity(int n) {
     return Id;
 }
 
-
-
-//  Construct a Gauss transform
-
+// Forward substitution algorithm for solving linear systems
 /*  *************************************************************
- *  Given : an integer pivot index, and a Matrix A
- *  Returns:
+ *  Given : a Matrix (L) in lower triangular form, a vector b
+ *  Returns: solution  vector x to Lx = b
  *  *************************************************************
 */
-void Matrix::Construct_Gauss_Transforms(int pivot_index, Matrix& A){
-    float val = 0.000;
-    for(int i = pivot_index + 1; i < num_rows; i++){
-        val = -1 * A.get(i, pivot_index)/A.get(pivot_index,pivot_index);
-        table[i][pivot_index] = val;
-        
-    }
-    
-}
 
 
 Matrix Matrix::forward_sub(Matrix& b){
@@ -293,6 +275,12 @@ Matrix Matrix::forward_sub(Matrix& b){
     return x;
 }
 
+// Backwards substitution algorithm for solving linear systems
+/*  *************************************************************
+ *  Given : a Matrix (U) in upper triangular form, a vector b
+ *  Returns: solution  vector x to Ux = b
+ *  *************************************************************
+*/
 
 Matrix Matrix::backward_sub(Matrix& y){
     Matrix x(num_rows, 1, 0);
@@ -312,6 +300,8 @@ Matrix Matrix::backward_sub(Matrix& y){
     return x;
 }
 
+//        -------------------  Nonsingular Linear Systems Solver -------------------
+
 
 Matrix Matrix::solve_NSLP(Matrix& U, Matrix& L, Matrix& b){
     Matrix gauss_transform(num_rows, num_cols, 0.0);
@@ -319,6 +309,8 @@ Matrix Matrix::solve_NSLP(Matrix& U, Matrix& L, Matrix& b){
     Matrix inverse(num_rows, num_cols, 0.0);
     Matrix temp(num_rows, num_cols, 0.0);
     
+    
+
     int col = 0;
     while(!U.upper_triangular() && col < U.get_num_cols()){
         
@@ -362,6 +354,9 @@ Matrix Matrix::transpose(Matrix& A){
 }
 
 
+//  ------------------- ###### SOLVING GENERAL LINEAR SYSTEMS PROBLEMS ######  -------------------
+
+//                       -------------------  Helper Functions -------------------
 
 
 void Matrix::swap_rows(Matrix& A, int row1, int row2){
@@ -410,6 +405,7 @@ Matrix Matrix::augmented_matrix(Matrix& A, Matrix & B){
     
 }
 
+// transforms A into reduced row echelon form
 Matrix Matrix::RREF(Matrix& A){
     Matrix U(A.num_rows, A.num_cols, 0);
     int lead = 0;
@@ -446,7 +442,7 @@ Matrix Matrix::RREF(Matrix& A){
     return U;
 }
 
-
+// returns the number of linearlly independent columns of A
 int Matrix::rank(Matrix& A){
     int r = 0;
     A = A.RREF(A);
@@ -511,4 +507,9 @@ Matrix Matrix::solve_GLSP(Matrix&A, Matrix&b){
 }
     
     
+
+
+
+
+
 
