@@ -41,10 +41,6 @@ void delete_col(vector<vector<int>> &vect, int col_to_delete){
     }
 }
 
-
-
-
-
 void LANA ::voltage_source_deflation_matrix(){
     
         // D: the grounded voltage-source deflation matrix
@@ -129,7 +125,6 @@ void LANA ::voltage_source_deflation_matrix(){
             D.delete_column(n);
         }
     }
-    D.print_matrix();
 }
 
 // a particular solution to the set of voltage-source KVLs, where
