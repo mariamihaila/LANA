@@ -119,12 +119,6 @@ int main() {
     A_ig.print_matrix();
     cout << endl;
     
-    
-    cout << endl << "V_source" << endl;
-    V_source.print_matrix();
-    cout << endl;
-  
-    
     // declare grounded incidence matricies
     Matrix A_r0(mr, ng -1, 0);
     Matrix A_v0(mv, ng -1, 0);
