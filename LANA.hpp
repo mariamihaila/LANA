@@ -3,6 +3,8 @@
 #include "Matrix.hpp"
 using namespace std;
 
+
+
 class LANA{
 private:
     
@@ -51,33 +53,23 @@ private:
     Matrix v_i;   // voltage drops across C-Sources               || dimensions: mi x 1
     Matrix v_r;   // voltage drops across resistors               || dimensions: mr x 1
 
+      
     
 public:
-    
     LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source,
          const Matrix& Resistor, const Matrix& I_source,const Matrix& A_rg, const Matrix& A_vg,
          const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,
          Matrix& D_vg, Matrix&pg, const Matrix& u_0, const Matrix& i_r, const Matrix& i_v,
          const Matrix& v_i, const Matrix& v_r);
 
-    void construct_Dvg( vector<int> ind_super_nodes, vector<int> dep_super_nodes,
-                        vector<int>ordinary_nodes, vector<int> non_essential_nodes);
-    
-    void node_classification ( );
-    void this_node_has_to_be_independent(vector<int>& must_be_independent);
- 
-    
+    void construct_Dvg();
+    void construct_p_g();
     void node_voltage_potentials(int u, Matrix& K, Matrix& D, Matrix& RHS, Matrix & p_0);
-    
     void voltage_drop_across_resistors();
     void voltage_drop_across_current_sources();
-
     void current_through_resistors(Matrix& G);
     void current_through_voltage_sources();
-    
     void solve();
     
-    void construct_p_g();
-
-  
+ 
 };
