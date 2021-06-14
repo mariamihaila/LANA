@@ -201,8 +201,6 @@ void LANA::solve() {
     
     int u = D.get_num_cols();
     // set D to deflated voltage dependency matrix D by deleting the ground node row
-    Matrix D(ng -1, u ,0);
-    D = D;
     D.delete_row(ground_node);
     
 
@@ -263,6 +261,8 @@ void LANA::solve() {
     voltage_drop_across_current_sources();
     current_through_resistors(G);
     current_through_voltage_sources();
+      
+
     
 }
 
