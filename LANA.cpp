@@ -31,13 +31,6 @@ LANA::LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_sour
 
 
 
-int _in_(int key, vector <int> vect){
-    int index = -1;
-    for(int i = 0; i < vect.size(); i++){
-        if(vect[i] == key) index = i;
-    }
-    return index;
-}
 
 
 void delete_col(vector<vector<int>> &vect, int col_to_delete){
@@ -52,48 +45,92 @@ void delete_col(vector<vector<int>> &vect, int col_to_delete){
 
 
 
-void LANA ::construct_Dvg(vector<int> ind_super_nodes, vector<int> dep_super_nodes,
-                          vector<int> ordinary_nodes, vector<int> non_essential_nodes){
+void LANA ::construct_Dvg(){
+    
+    // Dvg: The node voltage source dependency matrix
+        /*
+        -   The columns of Dvg form the basis of the nullspace of Avg
+            (the voltage source incidence matrix).
+         
+        -   In the last step, the column corresponding to the ground node
+            is deleted from the Dvg matrix. */
     
     
-    for (int m = 0; m < ng; m++){
-        for (int n = 0; n < ng; n++){
+    // Set U equal to the reduced row echelon form of Avg
+    
+    Matrix U(0,0,0);
+    U = A_vg;
+    U = U.RREF(U);
+    
+    // Take the transpose of U
+    U = U.transpose(U);
+    
+   
+    // equivalent to nonpivot col of U
+    // equivalent to lin dependent col of Avg)
+    // true only if all entries in the row are 0
+    bool zero_row = true;
+    
+    // equivalent to pivot col of U
+    // equivalent to lin independent col of Avg)
+    // true only ig row contains entry = to 1 && col index is > than in the previous row
+    bool lead_found = false;
+    
+   
+    
+    // The number of pivot columns of U
+    // equivalent to number of independent supernodes
+    //int r = A_vg.rank(A_vg);
+    
+    // nullity: The dimension of the nullspace
+    // equals to the number of lin dependent columns of matrix (# of non pivot)
+    // equivalent to index of dependent supernode
+    int nullity = 0;
+    Matrix null_basis(ng, ng, 0);
+    
+    
+    
+    // used to check if an entry = to 1 is a lead entry or not
+    // set first index to -1 for easy comparison
+    int prev_l_index  = -1;
+    
+    // array to keep track of lead entry row indexes
+    vector<int> row_l_index;
+    
+    int rank = 0;
+    for(int i = 0; i < ng; i++){
+        lead_found = false;
+        zero_row = true; // reset each row
+        nullity = i - rank;
+        for(int j = 0; j < mv; j++){
             
-            // Case 1: n is an ordinary node
-            // set the entry (n,n)  to 1.
-            
-            
-            if ( _in_(n, ordinary_nodes) != -1 )
-                D_vg.set(n, n, 1);
-            
-            
-            // Case 2: n is independent node
-            // set the (n,n) entry to 1.
-            // find the index x of the node dependent on n
-            // set the entry (x,n) to 1
-            
-            if (_in_(n, ind_super_nodes) != -1){
-                D_vg.set(n, n ,1);
-                int index = _in_(n, ind_super_nodes);
-                int x = dep_super_nodes[index];
-                D_vg.set(x, n, 1);
+            if (U.get(i,j) == 1 && !lead_found && j > prev_l_index){
+                cout << "lead found" << endl;
+                lead_found = true;
+                prev_l_index = j;
+                row_l_index.push_back(i);
+                zero_row = false;
+                rank++;
+            } else if (U.get(i,j) != 0){
+                zero_row = false;
+                D_vg.set(i, nullity, 1);
+                D_vg.set(row_l_index[j], nullity, 1);
+                }
+                
             }
-            
-            
-            if (_in_(n, dep_super_nodes) != -1){
-                int index = _in_(n, dep_super_nodes);
-                int x = ind_super_nodes[index];
-                D_vg.set(n, x, 1);
-            }
+        
+        if (zero_row){
+            D_vg.set(i,nullity,1);
         }
+
         
     }
     
+    D_vg.delete_column(ground_node);
     
-    int num_cols_deleted = 0;
     for (int n = 0; n < ng; n++) {
-        if (_in_(n, dep_super_nodes) != -1 || n == ground_node  || _in_(n, non_essential_nodes) != -1){
-            D_vg.delete_column(n - num_cols_deleted++);
+        if ( n > nullity){
+            D_vg.delete_column(n);
         }
     }
     D_vg.print_matrix();
@@ -105,88 +142,6 @@ void LANA::construct_p_g(){
     pg = pg.solve_GLSP(A_vg, V_source);
 }
 
-
-void LANA::this_node_has_to_be_independent(vector<int>& must_be_independent){
-    int frequency[ng];
-    for(int i = 0; i < ng; i++) frequency[i] = 0;
-    
-    for(int i = 0; i < mv; i++){
-        for(int j = 0; j < ng; j++){
-            if(A_vg.get(i,j) != 0){
-                frequency[j]++;
-                if (frequency[j] > 1) must_be_independent.push_back(j);
-            }
-        }
-    }
-}
-
-
-
-void LANA::node_classification(){
-    
-    vector<int>  ind_super_nodes;
-    vector <int> dep_super_nodes;
-    vector<int>  ordinary_nodes;
-    vector<int>  non_essential_nodes;
-    int generalized_node[2] = {-1, -1};
-    vector<int> must_be_independent;
-    this_node_has_to_be_independent(must_be_independent);
-    
-    for (int i = 0; i < mv; i++){
-        int count = -1;
-        for (int j = 0; j < ng; j++){
-            
-            if (A_vg.get(i,j) != 0){
-                count++;
-                generalized_node[count] = j;
-            }
-            
-        }
-        
-        if (generalized_node[1] == ground_node){
-            non_essential_nodes.push_back(generalized_node[0]);
-            ordinary_nodes.push_back(generalized_node[1]);
-        } else {
-            // Case1: the first node has already been classed as independent
-            // so the second one is automatically dependent
-            if ((_in_(generalized_node[0], ind_super_nodes) != -1)
-                || (_in_(generalized_node[0], must_be_independent) != -1)){
-                ind_super_nodes.push_back(generalized_node[0]);
-                dep_super_nodes.push_back(generalized_node[1]);
-            }
-            
-            // Case2: the second node has already been classed as independent
-            // so the first one is automatically dependent
-            
-            else {
-                ind_super_nodes.push_back(generalized_node[1]);
-                dep_super_nodes.push_back(generalized_node[0]);
-            }
-        }
-    }
-    
-    for(int i = 0; i < ng; i++){
-        if (_in_(i, ind_super_nodes) == -1 && _in_(i, dep_super_nodes) == -1)
-            ordinary_nodes.push_back(i);
-    }
-    
-    // However, if the ground node is classified as dependent - it is
-    // erased from that vector, and the node that it was dependent on
-    // is now classified as a nonessential node
-    
-    
-    int ground_index_dependent = _in_(ground_node, dep_super_nodes);
-    if ( ground_index_dependent != -1){
-        non_essential_nodes.push_back(ind_super_nodes[ground_index_dependent]);
-        dep_super_nodes.erase(dep_super_nodes.begin() + ground_index_dependent);
-        ind_super_nodes.erase(ind_super_nodes.begin() + ground_index_dependent);
-    }
-
-    
-    construct_Dvg(ind_super_nodes, dep_super_nodes, ordinary_nodes, non_essential_nodes);
-    construct_p_g();
-    
-}
 
 void LANA::node_voltage_potentials(int u, Matrix&K, Matrix& D, Matrix& RHS, Matrix& p_0){
     
@@ -244,8 +199,8 @@ void LANA::current_through_voltage_sources(){
 }
 
 void LANA::solve() {
-    
-    node_classification();
+    construct_Dvg();
+    construct_p_g();
     
     int u = D_vg.get_num_cols();
     // set D to deflated voltage dependency matrix D_vg by deleting the ground node row
@@ -306,14 +261,12 @@ void LANA::solve() {
     RHS = (Ar_T * G *b) + f;
   
     // Solve for all the circuit variables
-    
     node_voltage_potentials(u, K, D, RHS, p_0);
     voltage_drop_across_resistors();
     voltage_drop_across_current_sources();
     current_through_resistors(G);
     current_through_voltage_sources();
-      
-
+    
 }
 
 
