@@ -85,12 +85,19 @@ void Matrix::delete_row(int row){
 }
 
 
+/*  ------------------- ###### OVERLOADED OPERATORS ######  -------------------
+   
+  
 
-
-// Operator Overloading -----------------------------------------------
 
 
 // Matrix - Matrix multiplication
+
+/  *************************************************************
+ *  @Params:                                                    *
+ *  @Returns:                                                   *
+ *  *************************************************************
+*/
 
 Matrix Matrix::operator*(Matrix & B){
     assert (num_cols == B.num_rows);
@@ -111,7 +118,14 @@ Matrix Matrix::operator*(Matrix & B){
 }
 
 
-// Scalar Matrix Multiplication
+//  Matrix Scalar Multiplication
+
+/*  *************************************************************
+ *  @Params:                                                    *
+ *  @Returns:                                                   *
+ *  *************************************************************
+*/
+
 
 Matrix Matrix::operator*(float x){
     Matrix scalar_mult(num_rows, num_cols, 0);
@@ -127,6 +141,37 @@ Matrix Matrix::operator*(float x){
     
     return scalar_mult;
 }
+
+
+//  Matrix - Matrix Addition
+
+/*  *************************************************************
+ *  @Params:                                                    *
+ *  @Returns:                                                   *
+ *  *************************************************************
+*/
+
+Matrix Matrix::operator+(Matrix & B){
+    Matrix add(num_rows, num_cols, 0);
+    for(int i = 0; i < num_rows; i++){
+        for(int j = 0; j < num_cols; j++){
+            float temp = table[i][j] + B.table[i][j];
+            add.set(i, j, temp);
+            
+            
+        }
+    }
+    return add;
+    
+}
+
+//  Matrix Assignment Operator
+
+/*  *************************************************************
+ *  @Params:                                                    *
+ *  @Returns:                                                   *
+ *  *************************************************************
+*/
 
 Matrix& Matrix::operator=(const Matrix &right){
     num_rows = right.num_rows;
@@ -144,22 +189,21 @@ Matrix& Matrix::operator=(const Matrix &right){
     return *this;
 }
 
-Matrix Matrix::operator+(Matrix & B){
-    Matrix add(num_rows, num_cols, 0);
-    for(int i = 0; i < num_rows; i++){
-        for(int j = 0; j < num_cols; j++){
-            float temp = table[i][j] + B.table[i][j];
-            add.set(i, j, temp);
-            
-            
-        }
-    }
-    return add;
-    
-}
 
 
+//  ------------------- ###### SOLVING NONSINGULAR LINEAR SYSTEMS PROBLEMS ######  -------------------
 
+
+//                       -------------------  Helper Functions -------------------
+
+   
+//  Finds the inverse of a Gauss transform
+
+/*  *************************************************************
+ *  Given : A Gauss transform matrix
+ *  Returns: the inverse of the guass transform
+ *  *************************************************************
+*/
 
 
 Matrix Matrix::gauss_inverse(){
@@ -175,8 +219,13 @@ Matrix Matrix::gauss_inverse(){
 }
 
 
-// boolean function to determine whether a matrix is upper triangular
-// returns 1 if upper, 0 otherwise
+//  Determines whether a matrix is upper triangular
+
+/*  *************************************************************
+ *  Given : A matrix
+ *  Returns: 1 if uppertriangular, 0 otherwise
+ *  *************************************************************
+*/
 
 bool Matrix::upper_triangular(){
     for (int i = 0; i < num_rows; i++)
@@ -190,7 +239,14 @@ bool Matrix::upper_triangular(){
     return 1;
 }
 
-// constructs identity matrix
+
+//  Construct an identity matrix
+
+/*  *************************************************************
+ *  Given : an integer n, corresponding to the desired dimension
+ *  Returns: an n x n identity matrix
+ *  *************************************************************
+*/
 
 Matrix Matrix::identity(int n) {
     Matrix Id(n, n, 0);
@@ -203,13 +259,13 @@ Matrix Matrix::identity(int n) {
 
 
 
-// step 1: Find lower triangular matrix L
-/*
- - calculate gauss transforms L1, L2 ... Ln and mutliply matrix A on the right until A is an upper triangular matrix
- - Each gauss transform is constructed as an identity matrix with the entries under the pivot equal to - (entry of A
- you're trying to zero out)/pivot.
- */
+//  Construct a Gauss transform
 
+/*  *************************************************************
+ *  Given : an integer pivot index, and a Matrix A
+ *  Returns:
+ *  *************************************************************
+*/
 void Matrix::Construct_Gauss_Transforms(int pivot_index, Matrix& A){
     float val = 0.000;
     for(int i = pivot_index + 1; i < num_rows; i++){
@@ -305,21 +361,6 @@ Matrix Matrix::transpose(Matrix& A){
     
 }
 
-Matrix Matrix::deflate(Matrix& D, Matrix& A){
-    
-    Matrix A_deflated(A.num_rows, A.num_cols -1,0);
-    
-    if (D.num_cols != D.num_rows){
-        A.delete_row(A.num_rows - 1);
-        
-    } else{
-        A.delete_column(A.num_cols -1);
-        
-    }
-    A_deflated = A;
-    return A_deflated;
-}
-
 
 
 
@@ -405,6 +446,25 @@ Matrix Matrix::RREF(Matrix& A){
     return U;
 }
 
+
+int Matrix::rank(Matrix& A){
+    int r = 0;
+    A = A.RREF(A);
+
+    for(int i = 0; i < num_rows; i++){
+        for(int j = 0; j < num_cols; j++){
+            if(A.get(i,j) == 1){
+                r++;
+                break;
+            }
+
+        }
+ 
+    }
+    
+    return r;
+}
+
 Matrix Matrix::particular_solution(Matrix &RREF){
     Matrix x (num_cols - 1, 1, 0);
     
@@ -451,7 +511,4 @@ Matrix Matrix::solve_GLSP(Matrix&A, Matrix&b){
 }
     
     
-
-
-
 
