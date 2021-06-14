@@ -20,16 +20,14 @@
 LANA::LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source,
            const Matrix& Resistor, const Matrix& I_source,const Matrix& A_rg,
            const Matrix& A_vg, const Matrix& A_ig, const Matrix& A_r0,
-           const Matrix& A_v0, const Matrix& A_i0, Matrix& D_vg, Matrix&pg,
+           const Matrix& A_v0, const Matrix& A_i0, Matrix& D, Matrix&pg,
            const Matrix& u_0, const Matrix& i_r, const Matrix& i_v,
            const Matrix& v_i, const Matrix& v_r) : ng(ng), mr(mr), mv(mv), mi(mi),
                                                    ground_node(ground_node), V_source(V_source),
                                                    Resistor(Resistor), I_source(I_source),
                                                    A_rg(A_rg), A_vg(A_vg), A_ig(A_ig), A_r0(A_r0),
-                                                   A_v0(A_v0), A_i0(A_i0), D_vg(D_vg), pg(pg),
+                                                   A_v0(A_v0), A_i0(A_i0), D(D), pg(pg),
                                                    u_0(u_0), i_r(i_r), i_v(i_v), v_i(v_i), v_r(v_r){}
-
-
 
 
 
@@ -45,15 +43,17 @@ void delete_col(vector<vector<int>> &vect, int col_to_delete){
 
 
 
-void LANA ::construct_Dvg(){
+
+
+void LANA ::voltage_source_deflation_matrix(){
     
-    // Dvg: The node voltage source dependency matrix
+        // D: the grounded voltage-source deflation matrix
         /*
-        -   The columns of Dvg form the basis of the nullspace of Avg
+        -   The columns of D form the basis of the nullspace of Avg
             (the voltage source incidence matrix).
          
         -   In the last step, the column corresponding to the ground node
-            is deleted from the Dvg matrix. */
+            is deleted from the D matrix. */
     
     
     // Set U equal to the reduced row echelon form of Avg
@@ -112,32 +112,29 @@ void LANA ::construct_Dvg(){
                 rank++;
             } else if (U.get(i,j) != 0){
                 zero_row = false;
-                D_vg.set(i, nullity, 1);
-                D_vg.set(row_l_index[j], nullity, 1);
+                D.set(i, nullity, 1);
+                D.set(row_l_index[j], nullity, 1);
                 }
-                
             }
         
         if (zero_row){
-            D_vg.set(i,nullity,1);
+            D.set(i,nullity,1);
         }
-
-        
     }
     
-    D_vg.delete_column(ground_node);
+    D.delete_column(ground_node);
     
     for (int n = 0; n < ng; n++) {
         if ( n > nullity){
-            D_vg.delete_column(n);
+            D.delete_column(n);
         }
     }
-    D_vg.print_matrix();
+    D.print_matrix();
 }
 
-
-
-void LANA::construct_p_g(){
+// a particular solution to the set of voltage-source KVLs, where
+// Av_g* pg = V_source.
+void LANA::particular_solution(){
     pg = pg.solve_GLSP(A_vg, V_source);
 }
 
@@ -198,13 +195,14 @@ void LANA::current_through_voltage_sources(){
 }
 
 void LANA::solve() {
-    construct_Dvg();
-    construct_p_g();
     
-    int u = D_vg.get_num_cols();
-    // set D to deflated voltage dependency matrix D_vg by deleting the ground node row
+    voltage_source_deflation_matrix();
+    particular_solution();
+    
+    int u = D.get_num_cols();
+    // set D to deflated voltage dependency matrix D by deleting the ground node row
     Matrix D(ng -1, u ,0);
-    D = D_vg;
+    D = D;
     D.delete_row(ground_node);
     
 
@@ -265,6 +263,8 @@ void LANA::solve() {
     voltage_drop_across_current_sources();
     current_through_resistors(G);
     current_through_voltage_sources();
+      
+
     
 }
 
