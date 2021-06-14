@@ -64,7 +64,7 @@ public:
     
 
     void voltage_source_deflation_matrix();
-    void particular_solution(); 
+    void KVL_particular_solution(); 
     void node_voltage_potentials(int u, Matrix& K, Matrix& D, Matrix& RHS, Matrix & p_0);
     void voltage_drop_across_resistors();
     void voltage_drop_across_current_sources();
