@@ -36,7 +36,7 @@ private:
     
     
     // Deflation matrix for entire set of voltage-source KVL equations
-    Matrix D_vg;
+    Matrix D;
     
     // Particular solution to entire entire set of voltage-source KVL equations
     Matrix pg;
@@ -59,11 +59,12 @@ public:
     LANA(int ng, int mr, int mv, int mi, int ground_node, const Matrix& V_source,
          const Matrix& Resistor, const Matrix& I_source,const Matrix& A_rg, const Matrix& A_vg,
          const Matrix& A_ig, const Matrix& A_r0, const Matrix& A_v0, const Matrix& A_i0,
-         Matrix& D_vg, Matrix&pg, const Matrix& u_0, const Matrix& i_r, const Matrix& i_v,
+         Matrix& D, Matrix&pg, const Matrix& u_0, const Matrix& i_r, const Matrix& i_v,
          const Matrix& v_i, const Matrix& v_r);
+    
 
-    void construct_Dvg();
-    void construct_p_g();
+    void voltage_source_deflation_matrix();
+    void particular_solution(); 
     void node_voltage_potentials(int u, Matrix& K, Matrix& D, Matrix& RHS, Matrix & p_0);
     void voltage_drop_across_resistors();
     void voltage_drop_across_current_sources();
@@ -71,5 +72,4 @@ public:
     void current_through_voltage_sources();
     void solve();
     
- 
 };
