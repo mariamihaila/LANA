@@ -55,7 +55,6 @@ public:
 
     Matrix forward_sub(Matrix& b);
     Matrix backward_sub(Matrix& y);
-    Matrix deflate(Matrix& D, Matrix& A);
     Matrix transpose(Matrix& A);
     
     void swap_rows(Matrix& A, int row1, int row2);
@@ -64,12 +63,9 @@ public:
     void sub_rows(Matrix& A, int row1, int row2);
     Matrix augmented_matrix(Matrix& A, Matrix & B);
     Matrix RREF(Matrix& A);
+    int rank(Matrix& A);
     Matrix particular_solution(Matrix&RREF);
     Matrix solve_GLSP(Matrix&A, Matrix&b);
-    
-    
-    
-  
    
 };
 
