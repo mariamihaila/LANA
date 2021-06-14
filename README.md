@@ -75,7 +75,7 @@ Netlist Example:
 ## The linear algebra behind the scenes; a quick overview of the code implementation:
 
 
-### (1) Represent the node connectivity of circuit elements as incidence matricies. 
+### (1) Represent the node connectivity of circuit elements as incidence matricies.
 
 Program reads modified SPICE netlist from the console, and generates three incidence matricies -  for the resistors, the voltage sources, and the current sources - that desribe the node connectivity for each circuit element.
 
@@ -83,12 +83,16 @@ Program reads modified SPICE netlist from the console, and generates three incid
    -  A_vg:  the voltage source incidence matrix
    -  A_ig:  the current source incidence matrix
 
-### (2) Create a general solution to the set of Kirchoff's Voltage Law equations: A_vg * u_g = Vv ; a general linear systems problem.
-    
+### (2) Create a general solution to the set of Kirchoff's Voltage Law equations ( a general linear systems problem)
+
+<img width="157" alt="Screen_Shot_2021-06-14_at_2 58 22_PM-removebg-preview" src="https://user-images.githubusercontent.com/40043538/121965022-429afb00-cd21-11eb-8450-99ebd090f76b.png">
+
+
   - solve for the particular solution to the KVL equations: p_g
   - construct the voltage source dependency matrix D, whos columns form the basis of the nullspace of the voltage source   dependency matrix (A_vg).
 
 ### (3) Solve the Linear Algabraic Nodal Analysis Equation: 
-<img width="869" alt="Screen Shot 2021-06-14 at 2 31 04 PM" src="https://user-images.githubusercontent.com/40043538/121962126-2a28e180-cd1d-11eb-975d-1bf6ad287327.png"> 
+<img width="308" alt="Screen_Shot_2021-06-14_at_2 57 24_PM-removebg-preview" src="https://user-images.githubusercontent.com/40043538/121965234-90176800-cd21-11eb-99cd-1523b52e1e8f.png">
+
 
 
