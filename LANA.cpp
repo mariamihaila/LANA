@@ -105,7 +105,6 @@ void LANA ::construct_Dvg(){
         for(int j = 0; j < mv; j++){
             
             if (U.get(i,j) == 1 && !lead_found && j > prev_l_index){
-                cout << "lead found" << endl;
                 lead_found = true;
                 prev_l_index = j;
                 row_l_index.push_back(i);
