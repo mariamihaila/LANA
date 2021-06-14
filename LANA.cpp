@@ -134,7 +134,7 @@ void LANA ::voltage_source_deflation_matrix(){
 
 // a particular solution to the set of voltage-source KVLs, where
 // Av_g* pg = V_source.
-void LANA::particular_solution(){
+void LANA::KVL_particular_solution(){
     pg = pg.solve_GLSP(A_vg, V_source);
 }
 
@@ -197,7 +197,7 @@ void LANA::current_through_voltage_sources(){
 void LANA::solve() {
     
     voltage_source_deflation_matrix();
-    particular_solution();
+    KVL_particular_solution();
     
     int u = D.get_num_cols();
     // set D to deflated voltage dependency matrix D by deleting the ground node row
@@ -263,8 +263,6 @@ void LANA::solve() {
     voltage_drop_across_current_sources();
     current_through_resistors(G);
     current_through_voltage_sources();
-      
-
     
 }
 
