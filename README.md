@@ -4,7 +4,12 @@
 
 The Linear Algebraic Nodal Analysis Algorithm is a circuit analysis algorithm developed by Professor Jeff Anderson at Foothill College (appliedlinearalgebra.com) that bridges together classical nodal analysis and modified nodal analysis to use nonsingular linear system problem to model the electrical behavior of a circuit containing only resistors, DC voltage sources, and DC current sources. 
 
-## The Code Implementation: C++ console based DC circuit solver
+## My Independent Study Project: C++ console based DC circuit solver
+
+As part of my independent study, I decided to write a C++ program to solve *any* DC circuit using the LANA algorithm, saving the time and energy of pen and paper anaysis. My program can solve for all the circuit variables in under a second, which is great for humans. I wanted to make my program computer friendly too. To do so, I adapted the original LANA algorithm to optimize it for code. 
+
+#### Matrix Class:
+I wrote a Matrix class to handle some of the major Linear Algabraic functions (including several matrix-matrix operations, matrix transposes, identity matricies, calculating rank, converting to Reduced Row Echelon Form). The Matrix class can also solve Nonsingular Linear System Problems and find the general solution to a General Linear System Problem. 
 
 
 ### What kind of circuits are compatible?
@@ -192,8 +197,12 @@ Program reads modified SPICE netlist from the console, and generates three incid
   - solve for the particular solution to the KVL equations: p_g
   - construct the voltage source dependency matrix D, whos columns form the basis of the nullspace of the voltage source   dependency matrix (A_vg).
 
-### (3) Solve the Linear Algabraic Nodal Analysis Equation: 
-<img width="308" alt="Screen_Shot_2021-06-14_at_2 57 24_PM-removebg-preview" src="https://user-images.githubusercontent.com/40043538/121965234-90176800-cd21-11eb-99cd-1523b52e1e8f.png">
+### (4) Solve the Linear Algebraic Nodal Analysis Equation: 
+- add equation 
 
 
-
+### (3) Solve for the node voltage potentials
+-  add equations
+-  
+### (4) Solve for the rest of the variables: 
+- add equations
