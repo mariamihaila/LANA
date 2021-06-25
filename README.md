@@ -7,6 +7,9 @@ The Linear Algebraic Nodal Analysis Algorithm is a circuit analysis algorithm de
 
 ## My Independent Study Project: C++ console based DC circuit solver
 
+For my independent study, I chose to implement the LANA algorithm into a C++ program that could solve for any DC circuit in under a few seconds, saving the time and energy of pen and paper analysis. My initial approach was to translate the LANA algorithm directly into code, word for word, writing code to solve the problem like a human would. This methodology quickly tumbled my code into spaghetti code territory, and I realized an essential truth: computers don’t solve problems like humans solve problems. I was then faced with the task of translating the algorithm into computer friendly code. What started as a simple side project to save time solving circuits turned into an interdisciplinary exploration of linear algebra, computer science, and the heuristics of problem solving from George Polya’s “How To Solve It.” 
+
+
 ### What kind of circuits are compatible?
 
  Any electrical circuit with resistors, DC voltage sources, and DC current sources. 
